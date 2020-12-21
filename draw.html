@@ -1,0 +1,131 @@
+<html>
+<head>
+    <!--[if lte IE 8]>
+    <script src="excanvas.compiled.js"></script>
+    <![endif-->
+    <script language='JavaScript' src='http://code.jquery.com/jquery-1.6.4.min.js'></script>
+    <script language='JavaScript' src='http://www.caltech.edu/aux/dynamic-images.js'></script>
+    <script language='JavaScript' src='http://www.caltech.edu/aux/image-functions.js'></script>
+    <script language='JavaScript' src='http://www.its.caltech.edu/~kevinh/navbar.js'></script>
+
+    <script language='JavaScript' src='isotopes.js'></script>
+
+    <meta name="viewport" 
+      content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+</head>
+<body>
+    <input type="range" min="1" max="20" onchange="draw(this.value)"/>
+    <br />
+    <canvas id="canvas" height="600px" width="800px"></canvas>
+    <script>
+        function roundRect(c, x, y, width, height, radius, fill, stroke) {
+            if (typeof stroke == "undefined" ) {
+                stroke = true;
+            }
+            if (typeof radius === "undefined") {
+                radius = 5;
+            }
+            c.beginPath();
+            c.moveTo(x + radius, y);
+            c.lineTo(x + width - radius, y);
+            c.quadraticCurveTo(x + width, y, x + width, y + radius);
+            c.lineTo(x + width, y + height - radius);
+            c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            c.lineTo(x + radius, y + height);
+            c.quadraticCurveTo(x, y + height, x, y + height - radius);
+            c.lineTo(x, y + radius);
+            c.quadraticCurveTo(x, y, x + radius, y);
+            c.closePath();
+            if (stroke) {
+                c.stroke();
+            }
+            if (fill) {
+                c.fill();
+            }        
+        }
+
+
+        function elementRect(ctx, key, x, y, width, height, color) 
+        {
+            var isotope = isotopes[key];
+            var symbol = key.replace(/[0-9]/g, "");
+            var fontSize = width/3;
+            var fonts = {
+                "symbol" : "Bold " + fontSize + " Helvetica",
+                "exponent" : "Bold " + 0.4 * fontSize + " Helvetica",
+                "words" : "Normal " + fontSize/3 + " Helvetica"
+            };
+
+            ctx.shadowColor = "rgba(80,80,80,0.5)";
+            ctx.shadowOffsetX = ctx.shadowOffsetY = 3;
+            ctx.shadowBlur = 9;
+            ctx.fillStyle = color;
+            roundRect(ctx, x, y, width, height, width/10, true, false);
+
+            //ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.fillStyle = "rgba(0,0,0,0.8)";
+            ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
+            ctx.shadowBlur = width/20;
+            ctx.shadowColor = "white";
+            ctx.textAlign = "center";
+            ctx.textBaseline  = "center";
+            ctx.font = fonts["words"];
+            ctx.fillText("element", x + width/2, y + width/6);
+            ctx.fillText(isotope.mass, x + width/2, y + width );
+            ctx.fillText(isotope.conc + "%", x + width/2, y + (7/6)*width);
+
+            var elementX = x + width/2;
+            var elementY = y + width/2 + fontSize/4;
+            ctx.font = fonts["symbol"]
+            ctx.fillText(symbol, elementX, elementY);
+
+            var leftAlign = elementX - (1+symbol.length)*fontSize/4;
+            var rightAlign = elementX + (1+symbol.length)*fontSize/4;
+            var sup = elementY - fontSize/2;
+            var sub = elementY + fontSize/6;
+            ctx.font = fonts["exponent"];
+            ctx.textAlign = "right";
+            ctx.fillText(isotope.A, leftAlign, sup);
+            ctx.fillText(isotope.Z, leftAlign, sub);
+            ctx.textAlign = "left";
+            ctx.fillText(isotope.N, rightAlign, sub);
+        }
+        /*
+        elementRect(ctx,"C12",10.2,10.2,160,200,"#397");
+        elementRect(ctx,"C13",190.2,10.2,160,200,"#388");
+        elementRect(ctx,"Pu238",370.2,10.2,160,200,"#379");
+        elementRect(ctx,"Ni58",550.2,10.2,160,200,"#36a");
+        */
+        //elementRect(ctx,"Bi207",730.2,10.2,160,200,"#999");
+
+        selectedIsotope = isotopes["Cd109"];
+        function draw(zoom) {
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            var x = 0; var y = 0;
+            var w = 800; var h = 600;
+            ctx.clearRect(x,y,w,h);
+
+            for (var key in isotopes) {
+                var symbol = key.replace(/[0-9]/g, "");
+                var isotope = isotopes[key];
+
+                if (symbol != key) {
+                    //var N = isotope.N - selectedIsotope.N;
+                    //var Z = isotope.Z - selectedIsotope.Z;
+                    var N = isotope.N - 30;
+                    var Z = isotope.Z - 20;
+                    elementRect(ctx, key, N*9*zoom, h - Z*11*zoom, 8*zoom, 10*zoom, "rgb("+(5*N+100)+","+(255 - 5*Z)+","+"200)");
+                }
+            }
+        }
+
+        document.body.addEventListener('touchmove', function(event) {
+              event.preventDefault();
+        }, false); 
+
+
+        draw(10);
+    </script>
+</body>
+</html>
